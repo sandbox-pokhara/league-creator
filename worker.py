@@ -1,7 +1,9 @@
 import asyncio
+import time
+import traceback
 from random import choice
 
-import aiohttp
+import httpx
 
 from builder import get_variable
 from builder import set_variable
@@ -36,82 +38,112 @@ def get_sign_up_body(account, token):
     }
 
 
-async def run_worker(name, output_file, to_create, region, email_host, creating, completed, captcha_key, proxies, user_agents):
+async def run_worker(name, output_file, to_create, region, email_host, creating, completed, errors, proxy_rate_limits, captcha_key, proxies, user_agents):
+
+    def _get_log_message(message):
+        return f'{name} | {proxy_country}: {message}'
+
     try:
         while len(creating) + len(completed) < to_create:
+            logger.debug(errors)
+            if len(errors) >= 10 and all(e == 'InvalidToken' for e in errors):
+                logger.info(
+                    f'Found InvalidToken in last 10 requests. Pausing {name} for 15 mins...')
+                await asyncio.sleep(15 * 60)
+                errors.clear()
+
             account = generate_accounts(region=region, email_host=email_host)[0]
             creating.append(account['username'])
             proxy = next(proxies) if proxies is not None else None
+
+            proxy_rate_limit_until = proxy_rate_limits.get('proxy')
+            if proxy_rate_limit_until is not None and time.now() <= proxy_rate_limit_until:
+                logger.info(f'{name}: Proxy {proxy} is rate limited.')
+                continue
+
+            proxy_country = None
             logger.info(f'{name}: Using proxy: {proxy}')
-            timeout = aiohttp.ClientTimeout(total=30)
             user_agent = choice(user_agents)
-            print(user_agent)
             headers = {'user-agent': user_agent}
-            async with aiohttp.ClientSession(headers=headers, timeout=timeout) as session:
+
+            async with httpx.AsyncClient(headers=headers, timeout=120, proxies=proxy) as client:
+
                 if proxy is not None:
                     logger.info(f'{name}: Checking proxy country...')
-                    success, output = await get_proxy_counry(session, proxy)
+                    success, output = await get_proxy_counry(client)
+                    logger.info(f'{name}: Proxy country: {output}')
                     if not success and output == 407:
                         logger.error(f'{name}: Proxy authentication error.')
-                    logger.info(f'{name}: Proxy country: {output}')
+                    if not success and output == -1:
+                        logger.error(f'{name}: Invalid proxy.')
+                        creating.remove(account['username'])
+                        continue
                     if output in BANNED_COUNTRIES:
                         logger.error(f'{name}: Bad region found in proxy.')
                         creating.remove(account['username'])
                         continue
 
+                proxy_country = output
                 # Extract rq data and cookies
-                logger.info(f'{name}: Extracting rq data and cookies...')
+                logger.info(_get_log_message(f'Extracting rq data and cookies...'))
                 try:
-                    async with session.get(CONFIG_URL) as res:
-                        if not res.ok:
-                            logger.error('Error parsing rqdata.')
-                            creating.remove(account['username'])
-                            continue
-                        res = await res.json()
-                        rqdata = res['captcha']['hcaptcha']['rqdata']
-                except (aiohttp.ClientError, asyncio.TimeoutError):
-                    logger.error('Error parsing rqdata.')
+                    res = await client.get(CONFIG_URL)
+                    if res.status_code != 200:
+                        logger.error(_get_log_message('Error parsing rqdata.'))
+                        creating.remove(account['username'])
+                        continue
+                    res = res.json()
+                    rqdata = res['captcha']['hcaptcha']['rqdata']
+                except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
+                    logger.error(_get_log_message(f'Error parsing rqdata.'))
+                    logger.debug(_get_log_message(traceback.format_exc()))
                     creating.remove(account['username'])
                     continue
 
                 website_url = URLS[account['region']]
-                logger.info(f'{name}: Solving catpcha...')
-                captcha_result = await solve_anticaptcha(session, captcha_key, SITE_KEY, website_url, user_agent, rqdata)
+                logger.info(_get_log_message(f'Solving catpcha...'))
+                captcha_result = await solve_anticaptcha(client, captcha_key, SITE_KEY, website_url, user_agent, rqdata, name)
                 if captcha_result is None:
                     creating.remove(account['username'])
-                    logger.error('can not solve captcha: anticaptcha')
+                    logger.error(_get_log_message('can not solve captcha: anticaptcha'))
                     continue
 
                 body = get_sign_up_body(account, captcha_result['gRecaptchaResponse'])
-                logger.info(f'{name}: Signing up...')
+                logger.info(_get_log_message(f'Signing up...'))
 
                 try:
-                    async with session.post(SIGNUP_URL, json=body) as res:
-                        text = await res.text()
-                        if not res.ok:
-                            if res.status == 429:
-                                # TODO rate limit proxy
-                                pass
-                            if 'InvalidToken' in text:
-                                count = get_variable('invalid_token_count') + 1
-                                set_variable('invalid_token_count', count)
-                            if 'ValueNotUnique' in text:
-                                count = get_variable('value_not_unique_count') + 1
-                                set_variable('value_not_unique_count', count)
-                            if 'UnsupportedCountry' in text:
-                                count = get_variable('unsupported_country_count') + 1
-                                set_variable('unsupported_country_count', count)
-                            logger.error(f'Error signing up: {text}, Status: {res.status}')
-                            creating.remove(account['username'])
+                    res = await client.post(SIGNUP_URL, json=body)
+                    text = res.text
+                    if res.status_code != 200:
+                        if res.status_code == 429:
+                            # Disable proxy for 15 mins
+                            proxy_rate_limits[proxy] = time.now() + 900
                             continue
-                        logger.info('Success.')
-                        export_account(account, output_file)
-                        completed.append(account['username'])
+                        if 'InvalidToken' in text:
+                            count = get_variable('invalid_token_count') + 1
+                            set_variable('invalid_token_count', count)
+                            errors.append('InvalidToken')
+                        if 'ValueNotUnique' in text:
+                            count = get_variable('value_not_unique_count') + 1
+                            set_variable('value_not_unique_count', count)
+                            errors.append('ValueNotUnique')
+                        if 'UnsupportedCountry' in text:
+                            count = get_variable('unsupported_country_count') + 1
+                            set_variable('unsupported_country_count', count)
+                            errors.append('UnsupportedCountry')
+                        logger.error(_get_log_message(
+                            f'Error signing up: {text}, Status: {res.status_code}'))
                         creating.remove(account['username'])
-                        set_variable('remaining_count', to_create - len(completed))
-                        set_variable('signed_up_count', len(completed))
-                except (aiohttp.ClientError, asyncio.TimeoutError):
-                    logger.error('Error signing up.')
+                        continue
+                    errors.append(None)
+                    logger.info(_get_log_message(f'Success.'))
+                    export_account(account, output_file)
+                    completed.append(account['username'])
+                    creating.remove(account['username'])
+                    set_variable('remaining_count', to_create - len(completed))
+                    set_variable('signed_up_count', len(completed))
+                except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
+                    logger.error(_get_log_message('Error signing up.'))
                     creating.remove(account['username'])
                     continue
     except StopWorkerException as e:

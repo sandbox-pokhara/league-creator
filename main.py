@@ -2,6 +2,7 @@ import asyncio
 import atexit
 import os
 import traceback
+from collections import deque
 from datetime import datetime
 from itertools import cycle
 from threading import Thread
@@ -107,20 +108,28 @@ class App:
                 set_variable('remaining_count', accounts_count)
                 creating = []
                 created = []
+                errors = deque(maxlen=10)
+                proxy_rate_limits = {}
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
+
+                worker_count = min(accounts_count, 50)
+                logger.info(f'Worker Count: {worker_count}')
+
                 tasks = [run_worker(
-                    f'worker{i}',
-                    output_file,
-                    accounts_count,
-                    region,
-                    email_host,
-                    creating,
-                    created,
-                    captcha_key,
-                    proxy_cycle,
-                    user_agents,
-                ) for i in range(5)]
+                    name=f'worker{i}',
+                    output_file=output_file,
+                    to_create=accounts_count,
+                    region=region,
+                    email_host=email_host,
+                    creating=creating,
+                    completed=created,
+                    errors=errors,
+                    proxy_rate_limits=proxy_rate_limits,
+                    captcha_key=captcha_key,
+                    proxies=proxy_cycle,
+                    user_agents=user_agents,
+                ) for i in range(worker_count)]
                 loop.run_until_complete(asyncio.gather(*tasks))
                 logger.info('Completed.')
 

@@ -1,2 +1,2 @@
-aiohttp==3.8.4
+httpx==0.23.3
 pygubu==0.30
