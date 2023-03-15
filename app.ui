@@ -91,8 +91,28 @@
                       </object>
                     </child>
                     <child>
+                      <object class="ttk.Label" id="label9">
+                        <property name="text" translatable="yes">Captcha Type</property>
+                        <layout manager="pack">
+                          <property name="anchor">w</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Combobox" id="captcha_type_widget" named="True">
+                        <property name="textvariable">string:captcha_type</property>
+                        <layout manager="pack">
+                          <property name="anchor">w</property>
+                          <property name="expand">true</property>
+                          <property name="fill">x</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
                       <object class="ttk.Label" id="label4">
-                        <property name="text" translatable="yes">Anti Captcha Key</property>
+                        <property name="text" translatable="yes">Captcha Key</property>
                         <layout manager="pack">
                           <property name="anchor">w</property>
                           <property name="side">top</property>
@@ -322,11 +342,14 @@
                     <child>
                       <object class="ttk.Frame" id="frame3">
                         <property name="height">200</property>
-                        <property name="width">200</property>
+                        <property name="width">50</property>
                         <layout manager="pack">
                           <property name="anchor">n</property>
                           <property name="side">left</property>
                         </layout>
+                        <containerlayout manager="pack">
+                          <property name="propagate">False</property>
+                        </containerlayout>
                         <child>
                           <object class="tk.Label" id="label8">
                             <property name="state">normal</property>

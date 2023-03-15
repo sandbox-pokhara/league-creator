@@ -75,7 +75,7 @@ def generate_name(min_length, max_length):
 
         nam += alphalow(secondchar)
 
-        for cnt in range(2, name_length):
+        for _ in range(2, name_length):
             ran = rnd(1000)
             nextchar = 0
             curar = letters2[firstchar][secondchar]

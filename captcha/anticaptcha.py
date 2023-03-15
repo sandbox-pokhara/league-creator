@@ -21,7 +21,6 @@ STOP_ERRORS = [
 
 
 async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, worker_name='worker'):
-    '''Solve 2 captcha'''
     logger.info(f'{worker_name}: Initiating captcha task..')
     data = {
         'clientKey': api_key,
@@ -74,7 +73,7 @@ async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, 
                 continue
             if status == 'ready':
                 logger.info(f'{worker_name}: Captcha ready.')
-                return data['solution']
+                return data['solution']['gRecaptchaResponse']
         except (httpx.ConnectError, httpx.Connectasyncioout, httpx.RemoteProtocolError):
             logger.debug(f'Exception when solving captcha.')
             logger.debug(traceback.format_exc())

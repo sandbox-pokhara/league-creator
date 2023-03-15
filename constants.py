@@ -57,3 +57,8 @@ BANNED_COUNTRIES = [
     'PA',
     'VN',
 ]
+
+CAPTCHAS = [
+    '2captcha',
+    'anti-captcha',
+]

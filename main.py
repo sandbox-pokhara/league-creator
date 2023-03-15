@@ -18,6 +18,7 @@ from builder import set_attribute
 from builder import set_variable
 from config import dump_config
 from config import load_config
+from constants import CAPTCHAS
 from constants import REGION_CHOICES
 from constants import WRITE_FORMATS
 from logger import logger
@@ -42,11 +43,13 @@ class App:
     def initialize_gui_values(self):
         set_attribute('region_widget', 'values', REGION_CHOICES)
         set_attribute('write_format_widget', 'values', WRITE_FORMATS)
+        set_attribute('captcha_type_widget', 'values', CAPTCHAS)
 
         # Load saved config
         config = load_config()
         set_variable('is_use_proxies', config['is_use_proxies'])
         set_variable('accounts_count', config['accounts_count'])
+        set_variable('captcha_type', config['captcha_type'])
         set_variable('captcha_key', config['captcha_key'])
         set_variable('workers', config['workers'])
         set_variable('region', config['region'])
@@ -81,7 +84,9 @@ class App:
 
                 # get data from gui
                 accounts_count = get_variable('accounts_count')
+                captcha_type = get_variable('captcha_type')
                 captcha_key = get_variable('captcha_key')
+                workers = get_variable('workers')
                 region = get_variable('region')
                 write_format = get_variable('write_format')
                 is_use_proxies = get_variable('is_use_proxies')
@@ -110,7 +115,7 @@ class App:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
-                worker_count = min(accounts_count, 50)
+                worker_count = min(accounts_count, workers)
                 logger.info(f'Worker Count: {worker_count}')
 
                 tasks = [run_worker(
@@ -123,6 +128,7 @@ class App:
                     completed=created,
                     errors=errors,
                     proxy_rate_limits=proxy_rate_limits,
+                    captcha_type=captcha_type,
                     captcha_key=captcha_key,
                     proxies=proxy_cycle,
                     user_agents=user_agents,
@@ -131,6 +137,7 @@ class App:
                 logger.info('Completed.')
 
             except Exception:
+                logger.debug(traceback.format_exc())
                 messagebox.showerror('Unhandled Exception', traceback.format_exc())
             finally:
                 builder.set_attribute('start', 'state', 'normal')

@@ -7,7 +7,7 @@ import httpx
 
 from builder import get_variable
 from builder import set_variable
-from captcha.anticaptcha import solve_anticaptcha
+from captcha.solver import solve
 from constants import BANNED_COUNTRIES
 from constants import CONFIG_URL
 from constants import LOCALES
@@ -38,8 +38,19 @@ def get_sign_up_body(account, token):
     }
 
 
-async def run_worker(name, output_file, to_create, region, email_host, creating, completed, errors, proxy_rate_limits, captcha_key, proxies, user_agents):
-
+async def run_worker(name,
+                     output_file,
+                     to_create,
+                     region,
+                     email_host,
+                     creating,
+                     completed,
+                     errors,
+                     proxy_rate_limits,
+                     captcha_type,
+                     captcha_key,
+                     proxies,
+                     user_agents):
     def _get_log_message(message):
         return f'{name} | {proxy_country}: {message}'
 
@@ -102,13 +113,13 @@ async def run_worker(name, output_file, to_create, region, email_host, creating,
 
                 website_url = URLS[account['region']]
                 logger.info(_get_log_message(f'Solving catpcha...'))
-                captcha_result = await solve_anticaptcha(client, captcha_key, SITE_KEY, website_url, user_agent, rqdata, name)
+                captcha_result = await solve(captcha_type, client, captcha_key, SITE_KEY, website_url, user_agent, rqdata, name)
                 if captcha_result is None:
                     creating.remove(account['username'])
-                    logger.error(_get_log_message('can not solve captcha: anticaptcha'))
+                    logger.error(_get_log_message('Can not solve captcha.'))
                     continue
 
-                body = get_sign_up_body(account, captcha_result['gRecaptchaResponse'])
+                body = get_sign_up_body(account, captcha_result)
                 logger.info(_get_log_message(f'Signing up...'))
 
                 try:

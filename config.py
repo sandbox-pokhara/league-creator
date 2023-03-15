@@ -20,6 +20,7 @@ def load_config():
     config['is_use_proxies'] = config.get('is_use_proxies', False)
     config['accounts_count'] = config.get('accounts_count', 10)
     config['workers'] = config.get('workers', 10)
+    config['captcha_type'] = config.get('captcha_type', 'anti-captcha')
     config['captcha_key'] = config.get('captcha_key', '')
     config['region'] = config.get('region', 'EUW')
     config['write_format'] = config.get('write_format', 'username:password')
@@ -32,6 +33,7 @@ def load_config():
 def dump_config():
     config = {
         'accounts_count': get_variable('accounts_count'),
+        'captcha_type': get_variable('captcha_type'),
         'captcha_key': get_variable('captcha_key'),
         'workers': get_variable('workers'),
         'region': get_variable('region'),
