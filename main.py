@@ -6,6 +6,7 @@ from collections import deque
 from datetime import datetime
 from itertools import cycle
 from threading import Thread
+from tkinter import messagebox
 from tkinter.filedialog import askdirectory
 from tkinter.filedialog import askopenfilename
 
@@ -31,22 +32,23 @@ BASE_PATH = os.path.realpath('.')
 class App:
     def __init__(self):
         self.builder = pygubu.Builder()
-        self.builder.add_from_file('ui.xml')
-        self.mainwindow = self.builder.get_object('mainwindow')
+        self.builder.add_from_file('app.ui')
+        self.mainwindow = self.builder.get_object('main_window')
         self.builder.connect_callbacks(self)
         builder.pygubu_builder = self.builder
         tk_handler.text = self.builder.get_object('console')
         self.initialize_gui_values()
 
     def initialize_gui_values(self):
-        set_attribute('region', 'values', REGION_CHOICES)
-        set_attribute('write_format', 'values', WRITE_FORMATS)
+        set_attribute('region_widget', 'values', REGION_CHOICES)
+        set_attribute('write_format_widget', 'values', WRITE_FORMATS)
 
         # Load saved config
         config = load_config()
         set_variable('is_use_proxies', config['is_use_proxies'])
         set_variable('accounts_count', config['accounts_count'])
         set_variable('captcha_key', config['captcha_key'])
+        set_variable('workers', config['workers'])
         set_variable('region', config['region'])
         set_variable('write_format', config['write_format'])
         set_variable('proxies_file_path', config['proxies_file_path'])
@@ -59,13 +61,9 @@ class App:
     def set_is_use_proxies(self):
         is_use_proxies = get_variable('is_use_proxies')
         if not is_use_proxies:
-            set_attribute('proxies_file_path', 'state', 'disabled')
-            set_attribute('browse1', 'state', 'disabled')
-            set_attribute('proxy_file_path_label', 'state', 'disabled')
+            set_attribute('proxy_pathchooser', 'state', 'disabled')
         else:
-            set_attribute('proxies_file_path', 'state', 'normal')
-            set_attribute('proxy_file_path_label', 'state', 'normal')
-            set_attribute('browse1', 'state', 'normal')
+            set_attribute('proxy_pathchooser', 'state', 'normal')
 
     def set_proxies_path(self):
         path = os.path.realpath(askopenfilename(title=f'Choose proxies path'))
@@ -75,12 +73,11 @@ class App:
         path = os.path.realpath(askdirectory(title=f'Choose account write path'))
         set_variable('account_write_path', path)
 
-    def start_account_creation(self):
+    def on_start(self):
         def task():
-            button_frame = self.builder.get_object('buttons_frame')
             try:
-                dump_config(self.builder)
-                # tu.disable_children(self.builder, button_frame)
+                dump_config()
+                builder.set_attribute('start', 'state', 'disabled')
 
                 # get data from gui
                 accounts_count = get_variable('accounts_count')
@@ -134,15 +131,14 @@ class App:
                 logger.info('Completed.')
 
             except Exception:
-                traceback.print_exc()
+                messagebox.showerror('Unhandled Exception', traceback.format_exc())
             finally:
-                pass
-                # tu.enable_children(self.builder, button_frame)
+                builder.set_attribute('start', 'state', 'normal')
 
         Thread(target=task, daemon=True).start()
 
     def run(self):
-        atexit.register(dump_config, self.builder)
+        atexit.register(dump_config)
         self.mainwindow.mainloop()
 
 
