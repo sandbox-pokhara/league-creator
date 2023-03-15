@@ -25,6 +25,7 @@ from logger import logger
 from logger import tk_handler
 from proxies import get_proxies
 from user_agents import get_user_agents
+from utils import TkList
 from worker import run_worker
 
 BASE_PATH = os.path.realpath('.')
@@ -106,9 +107,11 @@ class App:
                 proxy_cycle = cycle(proxies) if proxies is not None else None
                 proxy_count = 0 if proxies is None else len(proxies)
                 user_agents = get_user_agents()
+                set_variable('progress', 0)
                 set_variable('proxy_count', proxy_count)
                 set_variable('remaining_count', accounts_count)
-                creating = []
+                set_variable('completed_count', 0)
+                creating = TkList('current_count', [])
                 created = []
                 errors = deque(maxlen=10)
                 proxy_rate_limits = {}
@@ -133,7 +136,7 @@ class App:
                     proxies=proxy_cycle,
                     user_agents=user_agents,
                 ) for i in range(worker_count)]
-                loop.run_until_complete(asyncio.gather(*tasks))
+                asyncio.run(asyncio.wait(tasks))
                 logger.info('Completed.')
 
             except Exception:

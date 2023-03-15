@@ -302,15 +302,6 @@
                           </object>
                         </child>
                         <child>
-                          <object class="tk.Label" id="label25">
-                            <property name="text" translatable="yes">Valid Proxy Count</property>
-                            <layout manager="pack">
-                              <property name="anchor">w</property>
-                              <property name="side">top</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
                           <object class="tk.Label" id="label26">
                             <property name="text" translatable="yes">InvalidToken Count</property>
                             <layout manager="pack">
@@ -376,7 +367,7 @@
                           <object class="tk.Label" id="label32">
                             <property name="state">normal</property>
                             <property name="text" translatable="yes">0</property>
-                            <property name="textvariable">int:reamaining_count</property>
+                            <property name="textvariable">int:remaining_count</property>
                             <layout manager="pack">
                               <property name="anchor">w</property>
                               <property name="side">top</property>
@@ -399,17 +390,6 @@
                             <property name="state">normal</property>
                             <property name="text" translatable="yes">0</property>
                             <property name="textvariable">int:proxy_count</property>
-                            <layout manager="pack">
-                              <property name="anchor">w</property>
-                              <property name="side">top</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="tk.Label" id="label35">
-                            <property name="state">normal</property>
-                            <property name="text" translatable="yes">0</property>
-                            <property name="textvariable">int:valid_proxy_count</property>
                             <layout manager="pack">
                               <property name="anchor">w</property>
                               <property name="side">top</property>
@@ -532,8 +512,9 @@
                       <property name="side">left</property>
                     </layout>
                     <child>
-                      <object class="ttk.Progressbar" id="progress" named="True">
+                      <object class="ttk.Progressbar" id="progressbar1">
                         <property name="orient">horizontal</property>
+                        <property name="variable">int:progress</property>
                         <layout manager="pack">
                           <property name="expand">false</property>
                           <property name="fill">x</property>

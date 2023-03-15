@@ -153,6 +153,7 @@ async def run_worker(name,
                     creating.remove(account['username'])
                     set_variable('remaining_count', to_create - len(completed))
                     set_variable('signed_up_count', len(completed))
+                    set_variable('progress', int(len(completed) * 100 / to_create))
                 except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
                     logger.error(_get_log_message('Error signing up.'))
                     creating.remove(account['username'])
