@@ -161,3 +161,7 @@ async def run_worker(name,
     except StopWorkerException as e:
         logger.info(f'{name}: Stopping worker. Reason: {e.reason}...')
         return
+    except Exception:
+        logger.info(f'{name}: Unexpected excpetion occured. Check logs.')
+        logger.debug(traceback.format_exc())
+        return
