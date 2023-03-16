@@ -1,4 +1,4 @@
 title league-creator-setup
-python -m venv venv
+py -3.10 -m venv venv
 venv\Scripts\pip.exe install -r requirements.txt
 pause
