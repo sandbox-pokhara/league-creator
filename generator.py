@@ -27,7 +27,7 @@ def generate_accounts(count=1, region='EUW', email_host='gmail.com', password_le
 
 
 def generate_password(length=32):
-    characters = string.ascii_letters + string.digits + string.punctuation
+    characters = string.ascii_letters + string.digits + '!#$%&*+-.<=>?@^_~'
     password = choice(string.ascii_letters) + choice(string.digits)
     password += "".join(choice(characters) for x in range(length - 2))
     return password
