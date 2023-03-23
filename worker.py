@@ -2,6 +2,7 @@ import asyncio
 import time
 import traceback
 from random import choice
+from random import randint
 
 import httpx
 
@@ -50,7 +51,10 @@ async def run_worker(name,
                      captcha_type,
                      captcha_key,
                      proxies,
-                     user_agents):
+                     user_agents,
+                     min_delay=0,
+                     max_delay=0,
+                     ):
     def _get_log_message(message):
         return f'{name} | {proxy_country}: {message}'
 
@@ -93,8 +97,8 @@ async def run_worker(name,
                         logger.error(f'{name}: Bad region found in proxy.')
                         creating.remove(account['username'])
                         continue
+                    proxy_country = output
 
-                proxy_country = output
                 # Extract rq data and cookies
                 logger.info(_get_log_message(f'Extracting rq data and cookies...'))
                 try:
@@ -154,6 +158,10 @@ async def run_worker(name,
                     set_variable('remaining_count', to_create - len(completed))
                     set_variable('signed_up_count', len(completed))
                     set_variable('progress', int(len(completed) * 100 / to_create))
+                    duration = randint(min_delay, max_delay)
+                    if duration > 0:
+                        logger.info(f'Sleeping for {duration} seconds...')
+                        await asyncio.sleep(duration)
                 except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
                     logger.error(_get_log_message('Error signing up.'))
                     creating.remove(account['username'])

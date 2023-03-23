@@ -161,7 +161,7 @@
                     </child>
                     <child>
                       <object class="ttk.Checkbutton" id="checkbutton3">
-                        <property name="command" type="command" cbtype="simple">set_is_use_proxies</property>
+                        <property cbtype="simple" name="command" type="command">set_is_use_proxies</property>
                         <property name="text" translatable="yes">Use Proxy</property>
                         <property name="variable">int:is_use_proxies</property>
                         <layout manager="pack">
@@ -225,8 +225,46 @@
                     </child>
                     <child>
                       <object class="ttk.Button" id="start" named="True">
-                        <property name="command" type="command" cbtype="simple">on_start</property>
+                        <property cbtype="simple" name="command" type="command">on_start</property>
                         <property name="text" translatable="yes">Start</property>
+                        <layout manager="pack">
+                          <property name="anchor">w</property>
+                          <property name="fill">x</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label10">
+                        <property name="text" translatable="yes">Min Delay</property>
+                        <layout manager="pack">
+                          <property name="anchor">w</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Entry" id="entry1">
+                        <property name="textvariable">int:min_delay</property>
+                        <layout manager="pack">
+                          <property name="anchor">w</property>
+                          <property name="fill">x</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label11">
+                        <property name="text" translatable="yes">Max Delay</property>
+                        <layout manager="pack">
+                          <property name="anchor">w</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Entry" id="entry3">
+                        <property name="textvariable">int:max_delay</property>
                         <layout manager="pack">
                           <property name="anchor">w</property>
                           <property name="fill">x</property>

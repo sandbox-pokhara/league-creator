@@ -94,6 +94,8 @@ class App:
                 proxies_file_path = get_variable('proxies_file_path')
                 email_host = get_variable('email_host')
                 account_write_path = get_variable('account_write_path')
+                min_delay = get_variable('min_delay')
+                max_delay = get_variable('max_delay')
 
                 # TODO
                 # if not validate_config(config):
@@ -135,6 +137,8 @@ class App:
                     captcha_key=captcha_key,
                     proxies=proxy_cycle,
                     user_agents=user_agents,
+                    min_delay=min_delay,
+                    max_delay=max_delay,
                 ) for i in range(worker_count)]
                 asyncio.run(asyncio.wait(tasks))
                 logger.info('Completed.')
