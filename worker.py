@@ -130,6 +130,8 @@ async def run_worker(name,
                     res = await client.post(SIGNUP_URL, json=body)
                     text = res.text
                     if res.status_code != 200:
+                        logger.error(_get_log_message(
+                            f'Error signing up: {text}, Status: {res.status_code}'))
                         if res.status_code == 429:
                             # Disable proxy for 15 mins
                             proxy_rate_limits[proxy] = time.now() + 900
@@ -138,6 +140,10 @@ async def run_worker(name,
                             count = get_variable('invalid_token_count') + 1
                             set_variable('invalid_token_count', count)
                             errors.append('InvalidToken')
+                            duration = randint(min_delay, max_delay)
+                            if duration > 0:
+                                logger.info(f'Sleeping for {duration} seconds...')
+                                await asyncio.sleep(duration)
                         if 'ValueNotUnique' in text:
                             count = get_variable('value_not_unique_count') + 1
                             set_variable('value_not_unique_count', count)
@@ -146,8 +152,6 @@ async def run_worker(name,
                             count = get_variable('unsupported_country_count') + 1
                             set_variable('unsupported_country_count', count)
                             errors.append('UnsupportedCountry')
-                        logger.error(_get_log_message(
-                            f'Error signing up: {text}, Status: {res.status_code}'))
                         creating.remove(account['username'])
                         continue
                     errors.append(None)
