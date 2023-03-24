@@ -27,6 +27,8 @@ def load_config():
     config['proxies_file_path'] = config.get('proxies_file_path', '')
     config['email_host'] = config.get('email_host', 'gmail.com')
     config['account_write_path'] = config.get('account_write_path', BASE_PATH)
+    config['min_delay'] = config.get('min_delay', 0)
+    config['max_delay'] = config.get('max_delay', 0)
     return config
 
 
@@ -42,6 +44,8 @@ def dump_config():
         'proxies_file_path': get_variable('proxies_file_path'),
         'email_host': get_variable('email_host'),
         'account_write_path': get_variable('account_write_path'),
+        'min_delay': get_variable('min_delay'),
+        'max_delay': get_variable('max_delay'),
     }
     try:
         with open(file_name, 'w') as fp:

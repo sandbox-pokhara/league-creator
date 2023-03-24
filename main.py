@@ -7,8 +7,6 @@ from datetime import datetime
 from itertools import cycle
 from threading import Thread
 from tkinter import messagebox
-from tkinter.filedialog import askdirectory
-from tkinter.filedialog import askopenfilename
 
 import pygubu
 
@@ -58,6 +56,8 @@ class App:
         set_variable('proxies_file_path', config['proxies_file_path'])
         set_variable('email_host', config['email_host'])
         set_variable('account_write_path', config['account_write_path'])
+        set_variable('min_delay', config['min_delay'])
+        set_variable('max_delay', config['max_delay'])
 
         self.set_is_use_proxies()
 
@@ -68,14 +68,6 @@ class App:
             set_attribute('proxy_pathchooser', 'state', 'disabled')
         else:
             set_attribute('proxy_pathchooser', 'state', 'normal')
-
-    def set_proxies_path(self):
-        path = os.path.realpath(askopenfilename(title=f'Choose proxies path'))
-        set_variable('proxies_file_path', path)
-
-    def set_accounts_write_path(self):
-        path = os.path.realpath(askdirectory(title=f'Choose account write path'))
-        set_variable('account_write_path', path)
 
     def on_start(self):
         def task():
