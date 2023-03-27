@@ -130,7 +130,7 @@ class App:
                     captcha_type=captcha_type,
                     captcha_key=captcha_key,
                     proxies=proxy_cycle,
-                    proxies_len=len(proxies),
+                    proxies_len=len(proxies) if proxies is not None else 0,
                     user_agents=user_agents,
                     min_delay=min_delay,
                     max_delay=max_delay,
