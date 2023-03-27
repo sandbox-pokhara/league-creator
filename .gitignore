@@ -112,3 +112,4 @@ sandbox.py
 output*
 proxies.txt
 config.json
+logs/

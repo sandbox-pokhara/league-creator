@@ -1,4 +1,5 @@
 import asyncio
+import re
 import traceback
 
 import httpx
@@ -7,6 +8,7 @@ from builder import get_variable
 from builder import set_variable
 from exceptions import StopWorkerException
 from logger import logger
+from proxies import get_proxy_parts
 
 __all__ = [
     'solve_anticaptcha',
@@ -20,8 +22,9 @@ STOP_ERRORS = [
 ]
 
 
-async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, worker_name='worker'):
+async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, proxy=None, proxy_ip=None, worker_name='worker'):
     logger.info(f'{worker_name}: Initiating captcha task..')
+    parts = get_proxy_parts(proxy)
     data = {
         'clientKey': api_key,
         'task': {
@@ -35,6 +38,14 @@ async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, 
             }
         }
     }
+    if proxy is not None and proxy_ip is not None and parts is not None:
+        data['task']['type'] = 'HCaptchaTask'
+        data['task']['proxyType'] = parts['type']
+        data['task']['proxyAddress'] = proxy_ip
+        data['task']['proxyPort'] = parts['port']
+        data['task']['proxyLogin'] = parts['username']
+        data['task']['proxyPassword'] = parts['password']
+
     request_url = 'https://api.anti-captcha.com/createTask'
     try:
         res = await client.post(request_url, json=data, timeout=300)
@@ -43,6 +54,9 @@ async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, 
         data = res.json()
         if data['errorId'] > 0 and data['errorCode'] in STOP_ERRORS:
             raise StopWorkerException(reason=data['errorCode'])
+        if 'taskId' not in data:
+            logger.debug(data)
+            return None
         count = int(get_variable('captcha_usage_count')) + 1
         set_variable('captcha_usage_count', count)
         task_id = data['taskId']
