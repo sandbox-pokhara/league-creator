@@ -109,6 +109,7 @@ class App:
                 created = []
                 errors = deque(maxlen=10)
                 proxy_rate_limits = {}
+                assigned_proixes = {}
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
@@ -125,9 +126,11 @@ class App:
                     completed=created,
                     errors=errors,
                     proxy_rate_limits=proxy_rate_limits,
+                    assigned_proixes=assigned_proixes,
                     captcha_type=captcha_type,
                     captcha_key=captcha_key,
                     proxies=proxy_cycle,
+                    proxies_len=len(proxies),
                     user_agents=user_agents,
                     min_delay=min_delay,
                     max_delay=max_delay,
