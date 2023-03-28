@@ -113,3 +113,4 @@ output*
 proxies.txt
 config.json
 logs/
+bad_ips.txt
