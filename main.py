@@ -10,7 +10,6 @@ from tkinter import messagebox
 
 import pygubu
 
-from bad_ips import get_bad_ips
 from builder import builder
 from builder import get_variable
 from builder import set_attribute
@@ -20,6 +19,7 @@ from config import load_config
 from constants import CAPTCHAS
 from constants import REGION_CHOICES
 from constants import WRITE_FORMATS
+from ips import get_ips
 from logger import logger
 from logger import tk_handler
 from proxies import get_proxies
@@ -102,7 +102,7 @@ class App:
                 proxy_cycle = cycle(proxies) if proxies is not None else None
                 proxy_count = 0 if proxies is None else len(proxies)
                 user_agents = get_user_agents()
-                bad_ips = get_bad_ips('bad_ips.txt')
+                bad_ips = get_ips('bad_ips.txt')
                 set_variable('progress', 0)
                 set_variable('proxy_count', proxy_count)
                 set_variable('remaining_count', accounts_count)

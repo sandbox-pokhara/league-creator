@@ -7,7 +7,6 @@ from random import randint
 import httpx
 from cachetools import TTLCache
 
-from bad_ips import add_bad_ip
 from builder import get_variable
 from builder import set_variable
 from captcha.solver import solve
@@ -21,6 +20,7 @@ from constants import URLS
 from exceptions import StopWorkerException
 from export import export_account
 from generator import generate_accounts
+from ips import add_ip
 from logger import logger
 from proxies import get_proxy_details
 
@@ -197,7 +197,8 @@ async def run_worker(name,
                                 set_variable('invalid_token_count', count)
                                 errors.append('InvalidToken')
                                 bad_ips.add(proxy_ip)
-                                add_bad_ip('bad_ips.txt', proxy_ip)
+                                add_ip('bad_ips.txt', proxy_ip)
+                                proxy_soft_ratelimits[proxy_ip] = True
                                 continue
                             if 'ValueNotUnique' in text:
                                 count = get_variable('value_not_unique_count') + 1
@@ -212,6 +213,7 @@ async def run_worker(name,
                         logger.info(_get_log_message(f'Success.'))
                         proxy_soft_ratelimits[proxy_ip] = True
                         export_account(account, output_file)
+                        add_ip('good_ips.txt', proxy_ip)
                         completed.append(account['username'])
                         set_variable('remaining_count', to_create - len(completed))
                         set_variable('signed_up_count', len(completed))

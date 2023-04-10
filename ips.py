@@ -2,7 +2,7 @@
 import os
 
 
-def get_bad_ips(file_path):
+def get_ips(file_path):
     try:
         with open(file_path) as fp:
             proxies = fp.read().splitlines()
@@ -11,7 +11,7 @@ def get_bad_ips(file_path):
         return set()
 
 
-def add_bad_ip(file_path, ip):
+def add_ip(file_path, ip):
     try:
         dirname = os.path.dirname(file_path)
         if dirname:
