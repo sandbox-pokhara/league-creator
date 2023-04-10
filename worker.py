@@ -166,7 +166,7 @@ async def run_worker(name,
                             continue
                         res = res.json()
                         rqdata = res['captcha']['hcaptcha']['rqdata']
-                    except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
+                    except httpx.HTTPError:
                         logger.error(_get_log_message(f'Error parsing rqdata.'))
                         logger.debug(_get_log_message(traceback.format_exc()))
                         continue
@@ -220,7 +220,7 @@ async def run_worker(name,
                         if duration > 0:
                             logger.info(f'Sleeping for {duration} seconds...')
                             await asyncio.sleep(duration)
-                    except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
+                    except httpx.HTTPError:
                         logger.error(_get_log_message('Error signing up.'))
                         continue
     except StopWorkerException as e:

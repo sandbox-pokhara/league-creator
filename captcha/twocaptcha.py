@@ -33,7 +33,7 @@ async def solve_2captcha(client, api_key, site_key, url, user_agent, rqdata, wor
         set_variable('captcha_usage_count', count)
         captcha_data = res.text.split('|')
         captcha_id = captcha_data[1]
-    except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
+    except httpx.HTTPError:
         return None
 
     # Get solved captcha token using captcha id
@@ -51,7 +51,7 @@ async def solve_2captcha(client, api_key, site_key, url, user_agent, rqdata, wor
             if '|' in res.text:
                 return res.text.split('|')[1]
             return res.text
-        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
+        except httpx.HTTPError:
             logger.debug(f'{worker_name}: Exception when solving captcha.')
             logger.debug(traceback.format_exc())
             await asyncio.sleep(10)

@@ -60,7 +60,7 @@ async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, 
         count = int(get_variable('captcha_usage_count')) + 1
         set_variable('captcha_usage_count', count)
         task_id = data['taskId']
-    except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
+    except httpx.HTTPError:
         return None
 
     while True:
@@ -88,7 +88,7 @@ async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, 
             if status == 'ready':
                 logger.info(f'{worker_name}: Captcha ready.')
                 return data['solution']['gRecaptchaResponse']
-        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
+        except httpx.HTTPError:
             logger.debug(f'Exception when solving captcha.')
             logger.debug(traceback.format_exc())
             await asyncio.sleep(10)

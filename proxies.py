@@ -33,5 +33,5 @@ async def get_proxy_details(client):
             return False, res.status_code
         res = res.json()
         return True, res
-    except (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError):
+    except httpx.HTTPError:
         return False, -1
