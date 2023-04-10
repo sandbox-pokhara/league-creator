@@ -116,6 +116,7 @@ async def run_worker(name,
                      user_agents,
                      min_delay=0,
                      max_delay=0,
+                     use_bad_ips=True,  # wheather to use ips that are in bad_ips.txt
                      ):
     def _get_log_message(message):
         return f'{name} | {proxy_country}: {message}'
@@ -153,7 +154,7 @@ async def run_worker(name,
                         continue
                     proxy_country = details['geoplugin_countryCode']
                     proxy_ip = details['geoplugin_request']
-                    if proxy_ip in bad_ips:
+                    if not use_bad_ips and proxy_ip in bad_ips:
                         logger.info('Proxy ip found in bad ips list. Skipping...')
                         continue
 
