@@ -43,8 +43,10 @@ async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, 
         data['task']['proxyType'] = parts['type']
         data['task']['proxyAddress'] = proxy_ip
         data['task']['proxyPort'] = parts['port']
-        data['task']['proxyLogin'] = parts['username']
-        data['task']['proxyPassword'] = parts['password']
+        if 'username' in parts:
+            data['task']['proxyLogin'] = parts['username']
+        if 'password' in parts:
+            data['task']['proxyPassword'] = parts['password']
 
     request_url = 'https://api.anti-captcha.com/createTask'
     try:
