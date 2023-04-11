@@ -107,6 +107,12 @@ async def get_valid_proxy(name,
         return proxy
 
 
+def disable_proxy(proxy, min_delay, max_delay):
+    proxy_disabled_duration = randint(min_delay, max_delay)
+    logger.info(f'Disabling {proxy} for {proxy_disabled_duration} secs.')
+    disabled_proxies[proxy] = time.time() + proxy_disabled_duration
+
+
 async def run_worker(name,
                      output_file,
                      to_create,
@@ -149,9 +155,11 @@ async def run_worker(name,
                         else:
                             if output == 407:
                                 logger.error(f'{name}: Proxy authentication error.')
+                                disable_proxy(proxy, min_delay, max_delay)
                                 continue
                             if output == -1:
                                 logger.error(f'{name}: Invalid proxy.')
+                                disable_proxy(proxy, min_delay, max_delay)
                                 continue
                             continue
 
@@ -200,6 +208,7 @@ async def run_worker(name,
                                 count = get_variable('ratelimited_count') + 1
                                 set_variable('ratelimited_count', count)
                                 proxy_ratelimits[proxy_ip] = True
+                                disable_proxy(proxy, min_delay, max_delay)
                                 continue
                             if 'InvalidToken' in text:
                                 count = get_variable('invalid_token_count') + 1
@@ -208,6 +217,7 @@ async def run_worker(name,
                                 bad_ips.add(proxy_ip)
                                 add_ip('bad_ips.txt', proxy_ip)
                                 proxy_soft_ratelimits[proxy_ip] = True
+                                disable_proxy(proxy, min_delay, max_delay)
                                 continue
                             if 'ValueNotUnique' in text:
                                 count = get_variable('value_not_unique_count') + 1
@@ -227,10 +237,7 @@ async def run_worker(name,
                         set_variable('remaining_count', to_create - len(completed))
                         set_variable('signed_up_count', len(completed))
                         set_variable('progress', int(len(completed) * 100 / to_create))
-                        proxy_disabled_duration = randint(min_delay, max_delay)
-                        logger.info(_get_log_message(
-                            f'Disabling {proxy} for {proxy_disabled_duration} secs.'))
-                        disabled_proxies[proxy] = time.time() + proxy_disabled_duration
+                        disable_proxy(proxy, min_delay, max_delay)
                     except httpx.HTTPError:
                         logger.error(_get_log_message('Error signing up.'))
                         continue
