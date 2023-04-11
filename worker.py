@@ -1,4 +1,5 @@
 import asyncio
+import time
 import traceback
 from contextlib import contextmanager
 from random import choice
@@ -29,6 +30,8 @@ proxy_ratelimits = TTLCache(maxsize=100_000, ttl=15 * 60)  # 15 minutes
 proxy_soft_ratelimits = TTLCache(maxsize=100_000, ttl=2 * 60)  # 2 minutes
 # soft_ratelimit rate limits proxies that
 # sucessfully created accounts to avoid rate limit from riot
+
+disabled_proxies = {}
 
 
 def get_sign_up_body(account, token):
@@ -75,6 +78,11 @@ async def get_valid_proxy(name,
         if i % proxies_len == 0:
             logger.info(f'{name}: No proxy available. Sleeping for 1 minutes...')
             await asyncio.sleep(randint(50, 70))
+            continue
+
+        # Check if proxy is disabled
+        is_disabled = disabled_proxies.get(proxy, -1) > time.time()
+        if is_disabled:
             continue
 
         # check if proxy is already assigned
@@ -219,10 +227,10 @@ async def run_worker(name,
                         set_variable('remaining_count', to_create - len(completed))
                         set_variable('signed_up_count', len(completed))
                         set_variable('progress', int(len(completed) * 100 / to_create))
-                        duration = randint(min_delay, max_delay)
-                        if duration > 0:
-                            logger.info(f'Sleeping for {duration} seconds...')
-                            await asyncio.sleep(duration)
+                        proxy_disabled_duration = randint(min_delay, max_delay)
+                        logger.info(_get_log_message(
+                            f'Disabling {proxy} for {proxy_disabled_duration} secs.'))
+                        disabled_proxies[proxy] = time.time() + proxy_disabled_duration
                     except httpx.HTTPError:
                         logger.error(_get_log_message('Error signing up.'))
                         continue
