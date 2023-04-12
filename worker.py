@@ -2,6 +2,7 @@ import asyncio
 import time
 import traceback
 from contextlib import contextmanager
+from datetime import datetime
 from random import choice
 from random import randint
 
@@ -231,6 +232,10 @@ async def run_worker(name,
                         errors.append(None)
                         logger.info(_get_log_message(f'Success.'))
                         proxy_soft_ratelimits[proxy_ip] = True
+                        account['creation_date'] = str(datetime.utcnow())
+                        account['ip_address'] = proxy_ip
+                        account['country'] = details['geoplugin_countryName']
+                        account['city'] = details['geoplugin_city']
                         export_account(account, output_file)
                         add_ip('good_ips.txt', proxy_ip)
                         completed.append(account['username'])
