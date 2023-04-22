@@ -1,4 +1,5 @@
 import csv
+import os
 
 FIELDS = [
     'region',
@@ -9,11 +10,14 @@ FIELDS = [
     'dob',
     'ip_address',
     'country',
-    'city'
+    'city',
 ]
 
 
 def export_account(account, output_path):
+    exists = os.path.exists(output_path)
     with open(output_path, 'a', newline='') as fp:
-        writer = csv.writer(fp, delimiter=':')
-        writer.writerow([account.get(f) for f in FIELDS])
+        writer = csv.DictWriter(fp, fieldnames=FIELDS, delimiter=':')
+        if not exists:
+            writer.writeheader()
+        writer.writerow({f: account.get(f) for f in FIELDS})
