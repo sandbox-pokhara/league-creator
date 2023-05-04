@@ -5,18 +5,25 @@ MAX_HISTORY = 2000
 
 
 class TkinterHandler(logging.Handler):
-    def __init__(self, text=None):
-        logging.Handler.__init__(self, )
+    def __init__(
+        self,
+        _type,
+        text=None,
+    ):
+        logging.Handler.__init__(
+            self,
+        )
+        self._type = _type
         self.text = text
         self.history = []
         self.history_size = 0
 
     def emit(self, record):
-        '''Writes the message'''
+        """Writes the message"""
         try:
-            msg = self.format(record) + '\n'
+            msg = self.format(record) + "\n"
             if self.history_size >= MAX_HISTORY:
-                self.text.delete('1.0', '1.end+1c')
+                self.text.delete("1.0", "1.end+1c")
                 self.history.pop(0)
                 self.history_size -= 1
             self.history_size += 1
@@ -24,6 +31,6 @@ class TkinterHandler(logging.Handler):
             if self.text is None:
                 return
             self.text.insert(tk.END, msg)
-            self.text.see('end')
+            self.text.see("end")
         except RuntimeError:
             pass

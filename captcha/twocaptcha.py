@@ -5,7 +5,6 @@ import httpx
 
 from builder import get_variable
 from builder import set_variable
-from logger import logger
 
 __all__ = [
     'solve_2captcha',
@@ -20,7 +19,7 @@ STOP_ERRORS = [
 ]
 
 
-async def solve_2captcha(client, api_key, site_key, url, user_agent, rqdata, worker_name='worker'):
+async def solve_2captcha(client, api_key, site_key, url, user_agent, rqdata, logger, worker_name='worker'):
     # Request to solve captcha
     try:
         url = f'http://2captcha.com/in.php?key={api_key}&method=hcaptcha&sitekey={site_key}&pageurl={url}&invisible=1&data={rqdata}&userAgent={user_agent}'

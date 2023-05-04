@@ -7,7 +7,6 @@ import httpx
 from builder import get_variable
 from builder import set_variable
 from exceptions import StopWorkerException
-from logger import logger
 from proxies import get_proxy_parts
 
 __all__ = [
@@ -22,7 +21,7 @@ STOP_ERRORS = [
 ]
 
 
-async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, proxy=None, proxy_ip=None, worker_name='worker'):
+async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, logger, proxy=None, proxy_ip=None, worker_name='worker'):
     logger.info(f'{worker_name}: Initiating captcha task..')
     parts = get_proxy_parts(proxy)
     data = {
