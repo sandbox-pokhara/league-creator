@@ -272,17 +272,6 @@
                         </layout>
                       </object>
                     </child>
-                    <child>
-                      <object class="ttk.Button" id="stop" named="True">
-                        <property name="command" type="command" cbtype="simple">test_function</property>
-                        <property name="state">normal</property>
-                        <property name="style">Toolbutton</property>
-                        <property name="text" translatable="yes">Stop</property>
-                        <layout manager="pack">
-                          <property name="side">top</property>
-                        </layout>
-                      </object>
-                    </child>
                   </object>
                 </child>
                 <child>

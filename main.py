@@ -27,112 +27,114 @@ from user_agents import get_user_agents
 from utils import TkList
 from worker import run_worker
 
-BASE_PATH = os.path.realpath(".")
+BASE_PATH = os.path.realpath('.')
 
 
 class App:
     def __init__(self):
         self.builder = pygubu.Builder()
-        self.builder.add_from_file("app.ui")
-        self.mainwindow = self.builder.get_object("main_window")
+        self.builder.add_from_file('app.ui')
+        self.mainwindow = self.builder.get_object('main_window')
         self.builder.connect_callbacks(self)
         builder.pygubu_builder = self.builder
+        self.loop = None
+        self.tasks = []
 
-        console_log_handler = get_tk_handler("console")
-        console_log_handler.text = self.builder.get_object("console")
+        console_log_handler = get_tk_handler('console')
+        console_log_handler.text = self.builder.get_object('console')
 
-        self.console_logger = get_logger("console", console_log_handler)
+        self.console_logger = get_logger('console', console_log_handler)
 
-        worker_log_handler = get_tk_handler("worker")
-        worker_log_handler.text = self.builder.get_object("worker")
+        worker_log_handler = get_tk_handler('worker')
+        worker_log_handler.text = self.builder.get_object('worker')
 
-        self.worker_logger = get_logger("worker", worker_log_handler)
-
+        self.worker_logger = get_logger('worker', worker_log_handler)
 
         self.initialize_gui_values()
 
     def initialize_gui_values(self):
-        set_attribute("region_widget", "values", REGION_CHOICES)
-        set_attribute("write_format_widget", "values", WRITE_FORMATS)
-        set_attribute("captcha_type_widget", "values", CAPTCHAS)
+        set_attribute('region_widget', 'values', REGION_CHOICES)
+        set_attribute('write_format_widget', 'values', WRITE_FORMATS)
+        set_attribute('captcha_type_widget', 'values', CAPTCHAS)
 
         # Load saved config
         config = load_config()
-        set_variable("is_use_proxies", config["is_use_proxies"])
-        set_variable("accounts_count", config["accounts_count"])
-        set_variable("captcha_type", config["captcha_type"])
-        set_variable("captcha_key", config["captcha_key"])
-        set_variable("workers", config["workers"])
-        set_variable("region", config["region"])
-        set_variable("write_format", config["write_format"])
-        set_variable("proxies_file_path", config["proxies_file_path"])
-        set_variable("email_host", config["email_host"])
-        set_variable("account_write_path", config["account_write_path"])
-        set_variable("min_delay", config["min_delay"])
-        set_variable("max_delay", config["max_delay"])
+        set_variable('is_use_proxies', config['is_use_proxies'])
+        set_variable('accounts_count', config['accounts_count'])
+        set_variable('captcha_type', config['captcha_type'])
+        set_variable('captcha_key', config['captcha_key'])
+        set_variable('workers', config['workers'])
+        set_variable('region', config['region'])
+        set_variable('write_format', config['write_format'])
+        set_variable('proxies_file_path', config['proxies_file_path'])
+        set_variable('email_host', config['email_host'])
+        set_variable('account_write_path', config['account_write_path'])
+        set_variable('min_delay', config['min_delay'])
+        set_variable('max_delay', config['max_delay'])
 
         self.set_is_use_proxies()
 
     # called when is_use_proxies is changed
     def set_is_use_proxies(self):
-        is_use_proxies = get_variable("is_use_proxies")
+        is_use_proxies = get_variable('is_use_proxies')
         if not is_use_proxies:
-            set_attribute("proxy_pathchooser", "state", "disabled")
+            set_attribute('proxy_pathchooser', 'state', 'disabled')
         else:
-            set_attribute("proxy_pathchooser", "state", "normal")
-
+            set_attribute('proxy_pathchooser', 'state', 'normal')
 
     def on_start(self):
 
         def task():
             try:
                 dump_config()
-                builder.set_attribute("start", "state", "disabled")
+                builder.set_attribute('start', 'state', 'disabled')
 
                 # get data from gui
-                accounts_count = get_variable("accounts_count")
-                captcha_type = get_variable("captcha_type")
-                captcha_key = get_variable("captcha_key")
-                workers = get_variable("workers")
-                region = get_variable("region")
-                write_format = get_variable("write_format")
-                is_use_proxies = get_variable("is_use_proxies")
-                proxies_file_path = get_variable("proxies_file_path")
-                email_host = get_variable("email_host")
-                account_write_path = get_variable("account_write_path")
-                min_delay = get_variable("min_delay")
-                max_delay = get_variable("max_delay")
+                accounts_count = get_variable('accounts_count')
+                captcha_type = get_variable('captcha_type')
+                captcha_key = get_variable('captcha_key')
+                workers = get_variable('workers')
+                region = get_variable('region')
+                write_format = get_variable('write_format')
+                is_use_proxies = get_variable('is_use_proxies')
+                proxies_file_path = get_variable('proxies_file_path')
+                email_host = get_variable('email_host')
+                account_write_path = get_variable('account_write_path')
+                min_delay = get_variable('min_delay')
+                max_delay = get_variable('max_delay')
 
                 # TODO
                 # if not validate_config(config):
                 #     return
 
                 # initialize vars before task
-                now = datetime.now().strftime("%Y-%b-%d %H-%M-%S").lower()
-                output_file = f"output_{region}_{now}.txt"
+                now = datetime.now().strftime('%Y-%b-%d %H-%M-%S').lower()
+                output_file = f'output_{region}_{now}.txt'
                 output_file = os.path.join(account_write_path, output_file)
-                proxies = get_proxies(proxies_file_path) if is_use_proxies else None
+                proxies = get_proxies(
+                    proxies_file_path) if is_use_proxies else None
                 proxy_cycle = cycle(proxies) if proxies is not None else None
                 proxy_count = 0 if proxies is None else len(proxies)
                 user_agents = get_user_agents()
-                bad_ips = get_ips("bad_ips.txt")
-                set_variable("progress", 0)
-                set_variable("proxy_count", proxy_count)
-                set_variable("remaining_count", accounts_count)
-                set_variable("completed_count", 0)
-                creating = TkList("current_count", [])
+                bad_ips = get_ips('bad_ips.txt')
+                set_variable('progress', 0)
+                set_variable('proxy_count', proxy_count)
+                set_variable('remaining_count', accounts_count)
+                set_variable('completed_count', 0)
+                creating = TkList('current_count', [])
                 created = []
                 errors = deque(maxlen=10)
                 assigned_proixes = {}
                 loop = asyncio.new_event_loop()
+                self.loop = loop
                 asyncio.set_event_loop(loop)
 
                 worker_count = min(accounts_count, workers)
-                self.console_logger.info(f"Worker Count: {worker_count}")
+                self.console_logger.info(f'Worker Count: {worker_count}')
 
-                tasks = [
+                self.tasks = [
                     run_worker(
-                        name=f"worker{i}",
+                        name=f'worker{i}',
                         output_file=output_file,
                         to_create=accounts_count,
                         region=region,
@@ -147,20 +149,22 @@ class App:
                         proxies_len=len(proxies) if proxies is not None else 0,
                         bad_ips=bad_ips,
                         user_agents=user_agents,
-                        logger = self.worker_logger,
+                        logger=self.worker_logger,
                         min_delay=min_delay,
                         max_delay=max_delay,
                     )
                     for i in range(worker_count)
                 ]
-                asyncio.run(asyncio.wait(tasks))
-                self.console_logger.info("Completed.")
+                asyncio.run(asyncio.wait(self.tasks))
+
+                self.console_logger.info('Completed.')
 
             except Exception:
                 self.console_logger.debug(traceback.format_exc())
-                messagebox.showerror("Unhandled Exception", traceback.format_exc())
+                messagebox.showerror('Unhandled Exception',
+                                     traceback.format_exc())
             finally:
-                builder.set_attribute("start", "state", "normal")
+                builder.set_attribute('start', 'state', 'normal')
 
         Thread(target=task, daemon=True).start()
 
@@ -169,6 +173,6 @@ class App:
         self.mainwindow.mainloop()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app = App()
     app.run()
