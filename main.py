@@ -15,7 +15,7 @@ from builder import builder
 from builder import get_variable
 from builder import set_attribute
 from builder import set_variable
-from config import dump_config
+from config import dump_config, show_error_popup, validate_config
 from config import load_config
 from constants import CAPTCHAS
 from constants import REGION_CHOICES
@@ -89,21 +89,26 @@ class App:
     def on_start(self):
         region_config = (self.get_region_configs_data())
 
-        # add error message popup.
         if not region_config:
+            show_error_popup("Error: Select at least one region.")
             return
         region_config, total_count = region_config
 
         def task():
             try:
-                dump_config()
+                config = dump_config()
+
+                if not validate_config(config):
+                    return
+
                 builder.set_attribute('start', 'state', 'disabled')
-                builder.set_attribute('region_config_clear_button', 'state', 'disabled')
+                builder.set_attribute(
+                    'region_config_clear_button', 'state', 'disabled')
 
                 captcha_type = get_variable('captcha_type')
                 captcha_key = get_variable('captcha_key')
                 workers = get_variable('workers')
-                write_format = get_variable('write_format')
+                # write_format = get_variable('write_format')
                 is_use_proxies = get_variable('is_use_proxies')
                 proxies_file_path = get_variable('proxies_file_path')
                 email_host = get_variable('email_host')
@@ -111,13 +116,9 @@ class App:
                 min_delay = get_variable('min_delay')
                 max_delay = get_variable('max_delay')
 
-                # TODO
-                # if not validate_config(config):
-                #     return
-
-                # initialize vars before task
                 now = datetime.now().strftime("%Y-%b-%d %H-%M-%S").lower()
-                proxies = get_proxies(proxies_file_path) if is_use_proxies else None
+                proxies = get_proxies(
+                    proxies_file_path) if is_use_proxies else None
                 proxy_cycle = cycle(proxies) if proxies is not None else None
                 proxy_count = 0 if proxies is None else len(proxies)
                 user_agents = get_user_agents()
@@ -168,7 +169,8 @@ class App:
 
             except Exception:
                 logger.debug(traceback.format_exc())
-                messagebox.showerror('Unhandled Exception', traceback.format_exc())
+                messagebox.showerror('Unhandled Exception',
+                                     traceback.format_exc())
             finally:
                 builder.set_attribute('start', 'state', 'normal')
 
