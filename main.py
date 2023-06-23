@@ -103,8 +103,7 @@ class App:
                     return
 
                 builder.set_attribute('start', 'state', 'disabled')
-                builder.set_attribute(
-                    'region_config_clear_button', 'state', 'disabled')
+                builder.set_attribute('region_config_clear_button', 'state', 'disabled')
 
                 captcha_type = get_variable('captcha_type')
                 captcha_key = get_variable('captcha_key')
@@ -117,8 +116,7 @@ class App:
                 min_delay = get_variable('min_delay')
                 max_delay = get_variable('max_delay')
 
-                proxies = get_proxies(
-                    proxies_file_path) if is_use_proxies else None
+                proxies = get_proxies(proxies_file_path) if is_use_proxies else None
                 proxy_cycle = cycle(proxies) if proxies is not None else None
                 proxy_count = 0 if proxies is None else len(proxies)
                 user_agents = get_user_agents()
@@ -170,8 +168,7 @@ class App:
 
             except Exception:
                 logger.debug(traceback.format_exc())
-                messagebox.showerror('Unhandled Exception',
-                                     traceback.format_exc())
+                messagebox.showerror('Unhandled Exception', traceback.format_exc())
             finally:
                 builder.set_attribute('start', 'state', 'normal')
 
@@ -192,8 +189,7 @@ class App:
     def region_change_callback(self, *args):
         region, count = get_variable('region'), get_variable('accounts_count')
         region_configs = self.builder.get_object('region_configs')
-        button = tk.Button(
-            region_configs, text=f'{region}-{count}')
+        button = tk.Button(region_configs, text=f'{region}-{count}')
         button.bind('<Button-1>', self.region_buttons_callback)
 
         self.region_configs.append((region, count, button))
