@@ -71,6 +71,41 @@
                       </object>
                     </child>
                     <child>
+                      <object class="ttk.Button" id="button2">
+                        <property name="text" translatable="yes">Add Region Config</property>
+                        <bind sequence="&lt;ButtonPress&gt;" handler="region_change_callback" add="" />
+                        <layout manager="pack">
+                          <property name="expand">true</property>
+                          <property name="fill">both</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="region_configs" named="True">
+                        <property name="height">15</property>
+                        <property name="text" translatable="yes">Region Configs</property>
+                        <property name="width">200</property>
+                        <layout manager="pack">
+                          <property name="expand">true</property>
+                          <property name="fill">both</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Button" id="region_config_clear_button" named="True">
+                        <property name="default">disabled</property>
+                        <property name="text" translatable="yes">Clear Region Configs</property>
+                        <bind sequence="&lt;ButtonPress&gt;" handler="clear_region_config" add="" />
+                        <layout manager="pack">
+                          <property name="anchor">w</property>
+                          <property name="fill">x</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
                       <object class="ttk.Label" id="label14">
                         <property name="text" translatable="yes">Output Format</property>
                         <layout manager="pack">
@@ -161,7 +196,7 @@
                     </child>
                     <child>
                       <object class="ttk.Checkbutton" id="checkbutton3">
-                        <property cbtype="simple" name="command" type="command">set_is_use_proxies</property>
+                        <property name="command" cbtype="simple" type="command">set_is_use_proxies</property>
                         <property name="text" translatable="yes">Use Proxy</property>
                         <property name="variable">int:is_use_proxies</property>
                         <layout manager="pack">
@@ -225,7 +260,7 @@
                     </child>
                     <child>
                       <object class="ttk.Button" id="start" named="True">
-                        <property cbtype="simple" name="command" type="command">on_start</property>
+                        <property name="command" cbtype="simple" type="command">on_start</property>
                         <property name="text" translatable="yes">Start</property>
                         <layout manager="pack">
                           <property name="anchor">w</property>

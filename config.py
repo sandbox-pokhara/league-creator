@@ -32,6 +32,21 @@ def load_config():
     return config
 
 
+error_messages = {
+    'accounts_count': 'Error: Accounts Count cannot be empty',
+    'workers': 'Error: Workers cannot be empty',
+    'captcha_type': 'Error: Captcha Type cannot be empty',
+    'captcha_key': 'Error: Captcha Key cannot be empty',
+    'region': 'Error: At least one region must be selected',
+    'write_format': 'Error: Output Format cannot be empty',
+    'proxies_file_path': 'Error: Proxies File Path cannot be empty',
+    'email_host': 'Error: Email Host cannot be empty',
+    'account_write_path': 'Error: Output Folder cannot be empty',
+    'min_delay': 'Error: Min Delay cannot be empty',
+    'max_delay': 'Error: Max Delay cannot be empty',
+}
+
+
 def dump_config():
     config = {
         'accounts_count': get_variable('accounts_count'),
@@ -49,9 +64,15 @@ def dump_config():
     }
     try:
         with open(file_name, 'w') as fp:
-            return json.dump(config, fp, indent=2)
+            json.dump(config, fp, indent=2)
+            return config
+
     except OSError:
         pass
+
+
+def show_error_popup(message):
+    messagebox.showerror('Error', message)
 
 
 def validate_config(config):
@@ -59,6 +80,6 @@ def validate_config(config):
         if item == '':
             if key == 'proxies_file_path' and not config.get('is_use_proxies', False):
                 continue
-            messagebox.showerror('Error', f'{key} cannot be empty')
+            show_error_popup(error_messages[key])
             return False
     return True

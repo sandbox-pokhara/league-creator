@@ -9,6 +9,11 @@ REGIONS = {
     'LAN': 'LA1',
     'LAS': 'LA2',
     'JP': 'JP1',
+    'PH': 'PH2',
+    'SG': 'SG2',
+    'TW': 'TW2',
+    'TH': 'TH2',
+    'VN': 'VN',
 }
 
 REGION_CHOICES = [r for r in REGIONS]
@@ -24,6 +29,11 @@ LOCALES = {
     'LAN': 'en',
     'LAS': 'en',
     'JP': 'ja',
+    'PH': 'en',
+    'SG': 'en',
+    'TW': 'zh',
+    'TH': 'th',
+    'VN': 'vi',
 }
 
 SITE_KEY = 'a010c060-9eb5-498c-a7b9-9204c881f9dc'
