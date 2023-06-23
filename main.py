@@ -1,22 +1,23 @@
 import asyncio
 import atexit
 import os
+import tkinter as tk
 import traceback
 from collections import deque
-from datetime import datetime
 from itertools import cycle
 from threading import Thread
 from tkinter import messagebox
 
-import tkinter as tk
 import pygubu
 
 from builder import builder
 from builder import get_variable
 from builder import set_attribute
 from builder import set_variable
-from config import dump_config, show_error_popup, validate_config
+from config import dump_config
 from config import load_config
+from config import show_error_popup
+from config import validate_config
 from constants import CAPTCHAS
 from constants import REGION_CHOICES
 from constants import WRITE_FORMATS
@@ -116,7 +117,6 @@ class App:
                 min_delay = get_variable('min_delay')
                 max_delay = get_variable('max_delay')
 
-                now = datetime.now().strftime("%Y-%b-%d %H-%M-%S").lower()
                 proxies = get_proxies(
                     proxies_file_path) if is_use_proxies else None
                 proxy_cycle = cycle(proxies) if proxies is not None else None
@@ -134,22 +134,22 @@ class App:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
-                for region, count in region_config.items():
-                    accounts_count = count
-                    region = region
+                accounts_state = []
 
-                    output_file = f'output_{region}_{now}.txt'
-                    output_file = os.path.join(account_write_path, output_file)
-                    worker_count = min(accounts_count, workers)
-                    logger.info(
-                        f'Creating {accounts_count} account(s) for {region}')
-                    logger.info(f'Worker Count: {worker_count}')
+                def yield_accounts():
+                    for region, count in region_config.items():
+                        for _ in range(count):
+                            yield region
 
-                    tasks = [run_worker(
+                accounts_state = yield_accounts()
+
+                worker_count = min(total_count, workers)
+                tasks = [
+                    (run_worker(
                         name=f'worker{i}',
-                        output_file=output_file,
-                        to_create=accounts_count,
-                        region=region,
+                        region=next(accounts_state),
+                        accounts_state=accounts_state,
+                        to_create=total_count,
                         email_host=email_host,
                         creating=creating,
                         completed=created,
@@ -163,9 +163,10 @@ class App:
                         user_agents=user_agents,
                         min_delay=min_delay,
                         max_delay=max_delay,
-                    ) for i in range(worker_count)]
-                    asyncio.run(asyncio.wait(tasks))
-                    logger.info('Completed.')
+                        account_write_path=account_write_path,
+                    )) for i in range(worker_count)]
+                asyncio.run(asyncio.wait(tasks))
+                logger.info('Completed.')
 
             except Exception:
                 logger.debug(traceback.format_exc())
