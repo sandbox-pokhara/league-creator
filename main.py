@@ -41,7 +41,7 @@ class App:
         builder.pygubu_builder = self.builder
         tk_handler.text = self.builder.get_object('console')
         self.initialize_gui_values()
-        self.region_configs = list()
+        self.region_configs = {region: [0] for region in REGION_CHOICES}
 
     def initialize_gui_values(self):
         set_attribute('region_widget', 'values', REGION_CHOICES)
@@ -73,27 +73,22 @@ class App:
         else:
             set_attribute('proxy_pathchooser', 'state', 'normal')
 
-    def get_region_configs_data(self):
-        if not self.region_configs:
-            return
-        region_config_dict = dict()
-        total_count = 0
-        for region, count, _ in self.region_configs:
-            if region_config_dict.get(region):
-                region_config_dict[region] += count
-            else:
-                region_config_dict[region] = count
-            total_count += count
+    def get_account_basket_data(self):
 
-        return region_config_dict, total_count
+        for values in self.region_configs.values():
+            if len(values) > 1:
+                break
+        else:
+            return
+
+        return sum([i[0] for i in self.region_configs.values()])
 
     def on_start(self):
-        region_config = (self.get_region_configs_data())
+        total_count = (self.get_account_basket_data())
 
-        if not region_config:
+        if not total_count:
             show_error_popup("Error: Select at least one region.")
             return
-        region_config, total_count = region_config
 
         def task():
             try:
@@ -134,12 +129,12 @@ class App:
 
                 accounts_state = []
 
-                def yield_accounts():
-                    for region, count in region_config.items():
-                        for _ in range(count):
+                def yield_regions():
+                    for region, items in self.region_configs.items():
+                        for _ in range(items[0]):
                             yield region
 
-                accounts_state = yield_accounts()
+                accounts_state = yield_regions()
 
                 worker_count = min(total_count, workers)
                 tasks = [
@@ -174,33 +169,41 @@ class App:
 
         Thread(target=task, daemon=True).start()
 
-    def region_buttons_callback(self, e):
-        for index, (*_, button) in enumerate(self.region_configs[:]):
-            if button == e.widget:
-                self.region_configs.pop(index)
-
+    def remove_region_button_callback(self, e):
+        region = e.widget['text'].split('-')[0]
+        self.region_configs[region][0] = 0
+        self.region_configs[region].pop()
         e.widget.destroy()
 
-    def clear_region_config(self, *args):
-        for _, _, button in self.region_configs:
-            button.destroy()
-        self.region_configs = []
+    def clear_accounts_basket(self, *args):
+        for i in self.region_configs.values():
+            i[0] = 0
+            if len(i) > 1:
+                i[1].destroy()
+            i.pop()
+        self.region_configs = {region: [0] for region in REGION_CHOICES}
 
-    def region_change_callback(self, *args):
+    def add_region_callback(self, event):
         region, count = get_variable('region'), get_variable('accounts_count')
-        region_configs = self.builder.get_object('region_configs')
-        button = tk.Button(region_configs, text=f'{region}-{count}')
-        button.bind('<Button-1>', self.region_buttons_callback)
+        region_configs = self.builder.get_object('accounts_basket')
 
-        self.region_configs.append((region, count, button))
-        num_widgets = len(region_configs.grid_slaves())
+        if not (self.region_configs[region][0]):
+            button = tk.Button(region_configs, text=f'{region}-{count}')
+            button.bind('<Button-1>', self.remove_region_button_callback)
 
-        row = num_widgets // 4
-        column = num_widgets % 4
+            self.region_configs[region].append(button)
 
-        button.grid(row=row, column=column,)
-        for c in range(column + 1):
-            region_configs.grid_columnconfigure(c, weight=1)
+            num_widgets = len(region_configs.grid_slaves())
+
+            row = num_widgets // 4
+            column = num_widgets % 4
+
+            button.grid(row=row, column=column,)
+            for c in range(column + 1):
+                region_configs.grid_columnconfigure(c, weight=1)
+
+        self.region_configs[region][0] = count
+        self.region_configs[region][1].config(text=f'{region}-{self.region_configs[region][0]}')
 
     def run(self):
         atexit.register(dump_config)

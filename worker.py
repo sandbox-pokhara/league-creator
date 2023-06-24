@@ -249,6 +249,13 @@ async def run_worker(name,
                         set_variable('signed_up_count', len(completed))
                         set_variable('progress', int(len(completed) * 100 / to_create))
                         disable_proxy(proxy, min_delay, max_delay)
+
+                        try:
+                            region = next(accounts_state)
+                        except StopIteration:
+                            logger.info(
+                                f'{name}: Stopping worker. Reason: No more regions to create accounts in...')
+                            return
                     except httpx.HTTPError:
                         logger.error(_get_log_message('Error signing up.'))
                         continue

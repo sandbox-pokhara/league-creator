@@ -72,8 +72,8 @@
                     </child>
                     <child>
                       <object class="ttk.Button" id="button2">
-                        <property name="text" translatable="yes">Add Region Config</property>
-                        <bind sequence="&lt;ButtonPress&gt;" handler="region_change_callback" add="" />
+                        <property name="text" translatable="yes">Add To Accounts Basket</property>
+                        <bind sequence="&lt;ButtonPress&gt;" handler="add_region_callback" add="" />
                         <layout manager="pack">
                           <property name="expand">true</property>
                           <property name="fill">both</property>
@@ -82,9 +82,9 @@
                       </object>
                     </child>
                     <child>
-                      <object class="ttk.Labelframe" id="region_configs" named="True">
+                      <object class="ttk.Labelframe" id="accounts_basket" named="True">
                         <property name="height">15</property>
-                        <property name="text" translatable="yes">Region Configs</property>
+                        <property name="text" translatable="yes">Accounts Basket</property>
                         <property name="width">200</property>
                         <layout manager="pack">
                           <property name="expand">true</property>
@@ -96,8 +96,8 @@
                     <child>
                       <object class="ttk.Button" id="region_config_clear_button" named="True">
                         <property name="default">disabled</property>
-                        <property name="text" translatable="yes">Clear Region Configs</property>
-                        <bind sequence="&lt;ButtonPress&gt;" handler="clear_region_config" add="" />
+                        <property name="text" translatable="yes">Clear Accounts Basket</property>
+                        <bind sequence="&lt;ButtonPress&gt;" handler="clear_accounts_basket" add="" />
                         <layout manager="pack">
                           <property name="anchor">w</property>
                           <property name="fill">x</property>
