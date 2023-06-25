@@ -1,4 +1,6 @@
 import asyncio
+import os
+import ssl
 import time
 import traceback
 from contextlib import contextmanager
@@ -115,9 +117,9 @@ def disable_proxy(proxy, min_delay, max_delay):
 
 
 async def run_worker(name,
-                     output_file,
-                     to_create,
                      region,
+                     to_create,
+                     accounts_state,
                      email_host,
                      creating,
                      completed,
@@ -129,15 +131,19 @@ async def run_worker(name,
                      proxies_len,
                      bad_ips,
                      user_agents,
+                     account_write_path,
                      min_delay=0,
                      max_delay=0,
                      use_bad_ips=True,  # wheather to use ips that are in bad_ips.txt
                      ):
     def _get_log_message(message):
         return f'{name} | {proxy_country}: {message}'
+    while len(creating) + len(completed) < to_create:
+        try:
+            now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-    try:
-        while len(creating) + len(completed) < to_create:
+            output_file = f'output_{region}_{now}.txt'
+            output_file = os.path.join(account_write_path, output_file)
             with account_manager(creating, region, email_host) as account:
                 proxy = await get_valid_proxy(name, proxies, proxies_len, assigned_proixes, bad_ips)
                 proxy_country = None
@@ -243,13 +249,24 @@ async def run_worker(name,
                         set_variable('signed_up_count', len(completed))
                         set_variable('progress', int(len(completed) * 100 / to_create))
                         disable_proxy(proxy, min_delay, max_delay)
+
+                        try:
+                            region = next(accounts_state)
+                        except StopIteration:
+                            logger.info(
+                                f'{name}: Stopping worker. Reason: No more regions to create accounts in...')
+                            return
                     except httpx.HTTPError:
                         logger.error(_get_log_message('Error signing up.'))
                         continue
-    except StopWorkerException as e:
-        logger.info(f'{name}: Stopping worker. Reason: {e.reason}...')
-        return
-    except Exception:
-        logger.info(f'{name}: Unexpected excpetion occured. Check logs.')
-        logger.debug(traceback.format_exc())
-        return
+        except StopWorkerException as e:
+            logger.info(f'{name}: Stopping worker. Reason: {e.reason}...')
+            return
+        except (ssl.SSLError, httpx.RemoteProtocolError):
+            logger.info(_get_log_message(
+                "Sll error or remote protocol error."))
+            continue
+        except Exception:
+            logger.info(f'{name}: Unexpected excpetion occured. Check logs.')
+            logger.debug(traceback.format_exc())
+            return

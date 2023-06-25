@@ -1,9 +1,9 @@
 import asyncio
 import atexit
 import os
+import tkinter as tk
 import traceback
 from collections import deque
-from datetime import datetime
 from itertools import cycle
 from threading import Thread
 from tkinter import messagebox
@@ -16,6 +16,8 @@ from builder import set_attribute
 from builder import set_variable
 from config import dump_config
 from config import load_config
+from config import show_error_popup
+from config import validate_config
 from constants import CAPTCHAS
 from constants import REGION_CHOICES
 from constants import WRITE_FORMATS
@@ -39,6 +41,7 @@ class App:
         builder.pygubu_builder = self.builder
         tk_handler.text = self.builder.get_object('console')
         self.initialize_gui_values()
+        self.region_configs = {region: [0] for region in REGION_CHOICES}
 
     def initialize_gui_values(self):
         set_attribute('region_widget', 'values', REGION_CHOICES)
@@ -70,19 +73,37 @@ class App:
         else:
             set_attribute('proxy_pathchooser', 'state', 'normal')
 
+    def get_account_basket_data(self):
+
+        for values in self.region_configs.values():
+            if len(values) > 1:
+                break
+        else:
+            return
+
+        return sum([i[0] for i in self.region_configs.values()])
+
     def on_start(self):
+        total_count = (self.get_account_basket_data())
+
+        if not total_count:
+            show_error_popup("Error: Select at least one region.")
+            return
+
         def task():
             try:
-                dump_config()
-                builder.set_attribute('start', 'state', 'disabled')
+                config = dump_config()
 
-                # get data from gui
-                accounts_count = get_variable('accounts_count')
+                if not validate_config(config):
+                    return
+
+                builder.set_attribute('start', 'state', 'disabled')
+                builder.set_attribute('region_config_clear_button', 'state', 'disabled')
+
                 captcha_type = get_variable('captcha_type')
                 captcha_key = get_variable('captcha_key')
                 workers = get_variable('workers')
-                region = get_variable('region')
-                write_format = get_variable('write_format')
+                # write_format = get_variable('write_format')
                 is_use_proxies = get_variable('is_use_proxies')
                 proxies_file_path = get_variable('proxies_file_path')
                 email_host = get_variable('email_host')
@@ -90,14 +111,6 @@ class App:
                 min_delay = get_variable('min_delay')
                 max_delay = get_variable('max_delay')
 
-                # TODO
-                # if not validate_config(config):
-                #     return
-
-                # initialize vars before task
-                now = datetime.now().strftime("%Y-%b-%d %H-%M-%S").lower()
-                output_file = f'output_{region}_{now}.txt'
-                output_file = os.path.join(account_write_path, output_file)
                 proxies = get_proxies(proxies_file_path) if is_use_proxies else None
                 proxy_cycle = cycle(proxies) if proxies is not None else None
                 proxy_count = 0 if proxies is None else len(proxies)
@@ -105,7 +118,7 @@ class App:
                 bad_ips = get_ips('bad_ips.txt')
                 set_variable('progress', 0)
                 set_variable('proxy_count', proxy_count)
-                set_variable('remaining_count', accounts_count)
+                set_variable('remaining_count', total_count)
                 set_variable('completed_count', 0)
                 creating = TkList('current_count', [])
                 created = []
@@ -114,28 +127,37 @@ class App:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
-                worker_count = min(accounts_count, workers)
-                logger.info(f'Worker Count: {worker_count}')
+                accounts_state = []
 
-                tasks = [run_worker(
-                    name=f'worker{i}',
-                    output_file=output_file,
-                    to_create=accounts_count,
-                    region=region,
-                    email_host=email_host,
-                    creating=creating,
-                    completed=created,
-                    errors=errors,
-                    assigned_proixes=assigned_proixes,
-                    captcha_type=captcha_type,
-                    captcha_key=captcha_key,
-                    proxies=proxy_cycle,
-                    proxies_len=len(proxies) if proxies is not None else 0,
-                    bad_ips=bad_ips,
-                    user_agents=user_agents,
-                    min_delay=min_delay,
-                    max_delay=max_delay,
-                ) for i in range(worker_count)]
+                def yield_regions():
+                    for region, items in self.region_configs.items():
+                        for _ in range(items[0]):
+                            yield region
+
+                accounts_state = yield_regions()
+
+                worker_count = min(total_count, workers)
+                tasks = [
+                    (run_worker(
+                        name=f'worker{i}',
+                        region=next(accounts_state),
+                        accounts_state=accounts_state,
+                        to_create=total_count,
+                        email_host=email_host,
+                        creating=creating,
+                        completed=created,
+                        errors=errors,
+                        assigned_proixes=assigned_proixes,
+                        captcha_type=captcha_type,
+                        captcha_key=captcha_key,
+                        proxies=proxy_cycle,
+                        proxies_len=len(proxies) if proxies is not None else 0,
+                        bad_ips=bad_ips,
+                        user_agents=user_agents,
+                        min_delay=min_delay,
+                        max_delay=max_delay,
+                        account_write_path=account_write_path,
+                    )) for i in range(worker_count)]
                 asyncio.run(asyncio.wait(tasks))
                 logger.info('Completed.')
 
@@ -146,6 +168,42 @@ class App:
                 builder.set_attribute('start', 'state', 'normal')
 
         Thread(target=task, daemon=True).start()
+
+    def remove_region_button_callback(self, e):
+        region = e.widget['text'].split('-')[0]
+        self.region_configs[region][0] = 0
+        self.region_configs[region].pop()
+        e.widget.destroy()
+
+    def clear_accounts_basket(self, *args):
+        for i in self.region_configs.values():
+            i[0] = 0
+            if len(i) > 1:
+                i[1].destroy()
+            i.pop()
+        self.region_configs = {region: [0] for region in REGION_CHOICES}
+
+    def add_region_callback(self, event):
+        region, count = get_variable('region'), get_variable('accounts_count')
+        region_configs = self.builder.get_object('accounts_basket')
+
+        if not (self.region_configs[region][0]):
+            button = tk.Button(region_configs, text=f'{region}-{count}')
+            button.bind('<Button-1>', self.remove_region_button_callback)
+
+            self.region_configs[region].append(button)
+
+            num_widgets = len(region_configs.grid_slaves())
+
+            row = num_widgets // 4
+            column = num_widgets % 4
+
+            button.grid(row=row, column=column,)
+            for c in range(column + 1):
+                region_configs.grid_columnconfigure(c, weight=1)
+
+        self.region_configs[region][0] = count
+        self.region_configs[region][1].config(text=f'{region}-{self.region_configs[region][0]}')
 
     def run(self):
         atexit.register(dump_config)
