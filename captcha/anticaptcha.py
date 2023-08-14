@@ -29,7 +29,8 @@ async def solve_anticaptcha(client, api_key, site_key, url, user_agent, rqdata, 
         'clientKey': api_key,
         'task': {
             'type': 'HCaptchaTaskProxyless',
-            'websiteURL': url, # isInvisible and userAgent removed since they are not needed
+            'websiteURL': url, # isInvisible removed 
+            'userAgent': user_agent,
             'websiteKey': site_key,
             'enterprisePayload': {
                 'rqdata': rqdata,
